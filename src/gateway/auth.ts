@@ -192,12 +192,10 @@ export function resolveGatewayAuth(params: {
 }): ResolvedGatewayAuth {
   const authConfig = params.authConfig ?? {};
   const env = params.env ?? process.env;
+  const envToken =
+    env.OPENCLAW_GATEWAY_TOKEN ?? env.INTERNAL_SERVICE_TOKEN ?? env.CLAWDBOT_GATEWAY_TOKEN;
   const token =
-    authConfig.token ??
-    env.OPENCLAW_GATEWAY_TOKEN ??
-    env.INTERNAL_SERVICE_TOKEN ??
-    env.CLAWDBOT_GATEWAY_TOKEN ??
-    undefined;
+    envToken ?? authConfig.token ?? undefined;
   const password =
     authConfig.password ??
     env.OPENCLAW_GATEWAY_PASSWORD ??
