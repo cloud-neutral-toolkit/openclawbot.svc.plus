@@ -40,6 +40,8 @@ spec:
           value: /data
         - name: OPENCLAW_GATEWAY_MODE
           value: local
+        - name: OPENCLAW_CONFIG_PATH
+          value: /data/openclaw.json
         # Gateway authentication token from Secret Manager
         # Shared with console.svc.plus and accounts.svc.plus
         - name: OPENCLAW_GATEWAY_TOKEN
