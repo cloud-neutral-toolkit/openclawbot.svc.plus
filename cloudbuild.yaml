@@ -35,9 +35,7 @@ steps:
       - '--port=8080'
       - '--set-env-vars=NODE_ENV=production,OPENCLAW_STATE_DIR=/data,OPENCLAW_GATEWAY_MODE=local'
       - '--update-secrets=OPENCLAW_GATEWAY_TOKEN=internal-service-token:latest,INTERNAL_SERVICE_TOKEN=internal-service-token:latest'
-      - '--clear-volumes'
       - '--add-volume=name=gcs-data,type=cloud-storage,bucket=openclawbot-data'
-      - '--clear-volume-mounts'
       - '--add-volume-mount=volume=gcs-data,mount-path=/data'
       - '--execution-environment=gen2'
 
