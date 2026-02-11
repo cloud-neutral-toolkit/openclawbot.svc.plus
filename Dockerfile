@@ -64,6 +64,8 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/openclaw.mjs ./openclaw.mjs
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/extensions ./extensions
+COPY --from=builder /app/skills ./skills
 
 # Copy UI dist if it exists (may not exist if ui:build was skipped)
 COPY --from=builder /app/ui ./ui
