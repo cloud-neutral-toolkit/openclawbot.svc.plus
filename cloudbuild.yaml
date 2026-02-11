@@ -1,0 +1,49 @@
+steps:
+  # Step 0: Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/openclawbot.svc.plus/openclawbot-svc-plus:$COMMIT_SHA'
+      - '.'
+
+  # Step 1: Push the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/openclawbot.svc.plus/openclawbot-svc-plus:$COMMIT_SHA'
+
+  # Step 2: Deploy to Cloud Run with proper configuration
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'openclawbot-svc-plus'
+      - '--platform=managed'
+      - '--region=asia-northeast1'
+      - '--image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/openclawbot.svc.plus/openclawbot-svc-plus:$COMMIT_SHA'
+      - '--service-account=openclawbot-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--memory=2Gi'
+      - '--cpu=2'
+      - '--timeout=300'
+      - '--concurrency=80'
+      - '--min-instances=1'
+      - '--max-instances=10'
+      - '--no-cpu-throttling'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--set-env-vars=NODE_ENV=production,OPENCLAW_STATE_DIR=/data,OPENCLAW_GATEWAY_MODE=local'
+      - '--update-secrets=OPENCLAW_GATEWAY_TOKEN=internal-service-token:latest,INTERNAL_SERVICE_TOKEN=internal-service-token:latest'
+      - '--clear-volumes'
+      - '--add-volume=name=gcs-data,type=cloud-storage,bucket=openclawbot-data'
+      - '--clear-volume-mounts'
+      - '--add-volume-mount=volume=gcs-data,mount-path=/data'
+      - '--execution-environment=gen2'
+
+images:
+  - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/openclawbot.svc.plus/openclawbot-svc-plus:$COMMIT_SHA'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
