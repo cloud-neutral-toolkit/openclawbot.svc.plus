@@ -94,7 +94,7 @@ gcloud run deploy "${SERVICE_NAME}" \
   --allow-unauthenticated \
   --port 8080 \
   --update-secrets OPENCLAW_GATEWAY_TOKEN="${SECRET_NAME}:latest" \
-  --set-env-vars OPENCLAW_GATEWAY_MODE=local \
+  --set-env-vars OPENCLAW_GATEWAY_MODE=local,OPENCLAW_STATE_DIR=/data,OPENCLAW_CONFIG_PATH=/data/openclaw.json \
   --add-volume name=gcs-data,type=cloud-storage,bucket="${GCS_BUCKET}" \
   --add-volume-mount volume=gcs-data,mount-path=/data
 
