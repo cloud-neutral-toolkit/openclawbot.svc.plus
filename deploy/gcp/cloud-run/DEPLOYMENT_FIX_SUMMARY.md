@@ -39,37 +39,49 @@ const token =
 #### `deploy/gcp/cloud-run/service.yaml`
 ```yaml
 env:
+  - name: NODE_ENV
+    value: production
+  - name: OPENCLAW_STATE_DIR
+    value: /data
+  - name: OPENCLAW_CONFIG_PATH   # 新增：方便配置同步
+    value: /data/openclaw.json
   - name: OPENCLAW_GATEWAY_MODE
     value: local
-  - name: OPENCLAW_GATEWAY_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: internal-service-token
-        key: latest
-  - name: INTERNAL_SERVICE_TOKEN  # 新增
+  - name: INTERNAL_SERVICE_TOKEN
     valueFrom:
       secretKeyRef:
         name: internal-service-token
         key: latest
 ```
 
-**作用**: 同时注入两个环境变量，确保应用能够读取到 token。
+**作用**: 同时注入环境变量，并显式指定配置文件路径在 GCS 挂载点，确保配置持久化。
 
-#### `deploy/gcp/cloud-run/deploy-secure.sh`
-```bash
---update-secrets OPENCLAW_GATEWAY_TOKEN="${SECRET_NAME}:latest",INTERNAL_SERVICE_TOKEN="${SECRET_NAME}:latest" \
+### 3. 构建与持续交互 (Cloud Build)
+
+#### `cloudbuild.yaml`
+```yaml
+steps:
+  # ... 构建和推送 ...
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'openclawbot-svc-plus'
+      - '--service-account=openclawbot-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--set-env-vars=NODE_ENV=production,OPENCLAW_STATE_DIR=/data,OPENCLAW_CONFIG_PATH=/data/openclaw.json,OPENCLAW_GATEWAY_MODE=local'
+      - '--update-secrets=OPENCLAW_GATEWAY_TOKEN=internal-service-token:latest,INTERNAL_SERVICE_TOKEN=internal-service-token:latest'
+      - '--add-volume=name=gcs-data,type=cloud-storage,bucket=openclawbot-data'
+      - '--add-volume-mount=volume=gcs-data,mount-path=/data'
+      - '--execution-environment=gen2'
 ```
 
-**作用**: 在部署时同时更新两个 secret 引用。
+**作用**: 实现自动化部署，集成 Secret Manager 和 GCS 存储卷。
 
-### 3. Secret Manager 配置
+### 4. 存储与权限
 
-- **Secret 名称**: `internal-service-token`
-- **Secret 值**: `uTvryFvAbz6M5sRtmTaSTQY6otLZ95hneBsWqXu+35I=`
-- **共享服务**:
-  - `openclawbot.svc.plus` (本服务)
-  - `console.svc.plus`
-  - `accounts.svc.plus`
+- **GCS Bucket**: `openclawbot-data` (挂载至 `/data`)
+- **Secret Manager**: `internal-service-token`
+- **服务账号**: `openclawbot-sa@xzerolab-480008.iam.gserviceaccount.com`
 
 ## 提交历史
 
