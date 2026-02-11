@@ -1,24 +1,45 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Cloud Run Deployment Script for OpenClawBot
-# This script deploys the application to Google Cloud Run with GCS volume mounting
+# Unified script: includes Secret Manager setup + Cloud Run deployment.
 
 PROJECT_ID="${GCP_PROJECT_ID:-xzerolab-480008}"
 REGION="${GCP_REGION:-asia-northeast1}"
 SERVICE_NAME="openclawbot-svc-plus"
 GCS_BUCKET="${GCS_BUCKET_NAME:-openclawbot-data}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT_EMAIL:-openclawbot-sa@${PROJECT_ID}.iam.gserviceaccount.com}"
-GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-mNrXA9Lm+5cs6wMziYMafJgkjTJg45OMiB1YTXEt5E8=}"
+SECRET_NAME="${OPENCLAW_GATEWAY_SECRET_NAME:-internal-service-token}"
+GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-}"
 
 echo "🚀 Deploying OpenClawBot to Cloud Run..."
-echo "   Project: $PROJECT_ID"
-echo "   Region: $REGION"
-echo "   Service: $SERVICE_NAME"
-echo "   GCS Bucket: $GCS_BUCKET"
+echo "   Project: ${PROJECT_ID}"
+echo "   Region: ${REGION}"
+echo "   Service: ${SERVICE_NAME}"
+echo "   GCS Bucket: ${GCS_BUCKET}"
+echo "   Secret: ${SECRET_NAME}"
 echo ""
 
-# Step 1: Create GCS bucket if it doesn't exist
+# Step 1: Create secret if missing (requires OPENCLAW_GATEWAY_TOKEN for first-time setup)
+echo "🔐 Checking Secret Manager..."
+if gcloud secrets describe "${SECRET_NAME}" --project="${PROJECT_ID}" &>/dev/null; then
+  echo "   ✅ Secret '${SECRET_NAME}' already exists"
+else
+  if [[ -z "${GATEWAY_TOKEN}" ]]; then
+    echo "   ❌ Secret '${SECRET_NAME}' does not exist."
+    echo "   Set OPENCLAW_GATEWAY_TOKEN to create it, then rerun."
+    exit 1
+  fi
+  echo "   Creating secret '${SECRET_NAME}'..."
+  printf '%s' "${GATEWAY_TOKEN}" | \
+    gcloud secrets create "${SECRET_NAME}" \
+      --data-file=- \
+      --project="${PROJECT_ID}" \
+      --replication-policy="automatic"
+  echo "   ✅ Secret created"
+fi
+
+# Step 2: Create GCS bucket if it doesn't exist
 echo "📦 Checking GCS bucket..."
 if ! gsutil ls -b "gs://${GCS_BUCKET}" &>/dev/null; then
   echo "   Creating GCS bucket: ${GCS_BUCKET}"
@@ -28,7 +49,7 @@ else
   echo "   ✅ Bucket already exists"
 fi
 
-# Step 2: Create service account if it doesn't exist
+# Step 3: Create service account if it doesn't exist
 echo "🔐 Checking service account..."
 if ! gcloud iam service-accounts describe "${SERVICE_ACCOUNT}" --project="${PROJECT_ID}" &>/dev/null; then
   echo "   Creating service account..."
@@ -36,11 +57,13 @@ if ! gcloud iam service-accounts describe "${SERVICE_ACCOUNT}" --project="${PROJ
     --display-name="OpenClawBot Service Account" \
     --project="${PROJECT_ID}"
   echo "   ✅ Service account created"
+  echo "   ⏳ Waiting for service account to propagate..."
+  sleep 10
 else
   echo "   ✅ Service account already exists"
 fi
 
-# Step 3: Grant necessary permissions
+# Step 4: Grant required IAM permissions
 echo "🔑 Granting permissions..."
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${SERVICE_ACCOUNT}" \
@@ -48,9 +71,15 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --condition=None \
   --quiet
 
+gcloud secrets add-iam-policy-binding "${SECRET_NAME}" \
+  --member="serviceAccount:${SERVICE_ACCOUNT}" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project="${PROJECT_ID}" \
+  --quiet
+
 echo "   ✅ Permissions granted"
 
-# Step 4: Build and deploy
+# Step 5: Build and deploy
 echo "🏗️  Building and deploying to Cloud Run..."
 gcloud run deploy "${SERVICE_NAME}" \
   --source . \
@@ -66,8 +95,8 @@ gcloud run deploy "${SERVICE_NAME}" \
   --no-cpu-throttling \
   --allow-unauthenticated \
   --port 8080 \
-  --set-env-vars OPENCLAW_GATEWAY_TOKEN="${GATEWAY_TOKEN}" \
-  --set-env-vars OPENCLAW_CONFIG_PATH=/data/openclaw.json,OPENCLAW_STATE_DIR=/data,OPENCLAW_GATEWAY_MODE=local \
+  --update-secrets OPENCLAW_GATEWAY_TOKEN="${SECRET_NAME}:latest" \
+  --set-env-vars NODE_ENV=production,OPENCLAW_STATE_DIR=/data,OPENCLAW_CONFIG_PATH=/data/openclaw.json,OPENCLAW_GATEWAY_MODE=local \
   --add-volume name=gcs-data,type=cloud-storage,bucket="${GCS_BUCKET}" \
   --add-volume-mount volume=gcs-data,mount-path=/data
 
@@ -80,3 +109,8 @@ gcloud run services describe "${SERVICE_NAME}" \
   --region "${REGION}" \
   --project "${PROJECT_ID}" \
   --format 'value(status.url)'
+
+echo ""
+echo "🔐 Secret Manager:"
+echo "   Secret: ${SECRET_NAME}"
+echo "   Version: latest"
