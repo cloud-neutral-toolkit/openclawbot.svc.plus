@@ -47,14 +47,14 @@ env:
     value: /data/openclaw.json
   - name: OPENCLAW_GATEWAY_MODE
     value: local
-  - name: INTERNAL_SERVICE_TOKEN
+  - name: OPENCLAW_GATEWAY_TOKEN
     valueFrom:
       secretKeyRef:
         name: internal-service-token
         key: latest
 ```
 
-**作用**: 同时注入环境变量，并显式指定配置文件路径在 GCS 挂载点，确保配置持久化。
+**作用**: 注入 `OPENCLAW_GATEWAY_TOKEN` (映射 `internal-service-token` Secret)，不需要额外注入 `INTERNAL_SERVICE_TOKEN` (代码优先使用 `OPENCLAW_GATEWAY_TOKEN`)。同时显式指定配置文件路径在 GCS 挂载点，确保配置持久化。
 
 ### 3. 构建与持续交互 (Cloud Build)
 
@@ -69,7 +69,7 @@ steps:
       - 'openclawbot-svc-plus'
       - '--service-account=openclawbot-sa@$PROJECT_ID.iam.gserviceaccount.com'
       - '--set-env-vars=NODE_ENV=production,OPENCLAW_STATE_DIR=/data,OPENCLAW_CONFIG_PATH=/data/openclaw.json,OPENCLAW_GATEWAY_MODE=local'
-      - '--update-secrets=OPENCLAW_GATEWAY_TOKEN=internal-service-token:latest,INTERNAL_SERVICE_TOKEN=internal-service-token:latest'
+      - '--update-secrets=OPENCLAW_GATEWAY_TOKEN=internal-service-token:latest'
       - '--add-volume=name=gcs-data,type=cloud-storage,bucket=openclawbot-data'
       - '--add-volume-mount=volume=gcs-data,mount-path=/data'
       - '--execution-environment=gen2'
@@ -129,7 +129,7 @@ cd deploy/gcp/cloud-run
 1. ✅ Cloud Run 服务状态为 `Ready: True`
 2. ✅ 容器成功启动并监听端口 8080
 3. ✅ 日志中没有 "Gateway auth is set to token, but no token is configured" 错误
-4. ✅ 环境变量 `INTERNAL_SERVICE_TOKEN` 和 `OPENCLAW_GATEWAY_TOKEN` 都已正确注入
+4. ✅ 环境变量 `OPENCLAW_GATEWAY_TOKEN` 已正确注入 (且应用能通过它完成认证)
 5. ✅ 服务可以通过 Cloud Run URL 访问
 
 ## 故障排查
