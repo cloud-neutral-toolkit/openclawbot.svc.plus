@@ -33,7 +33,7 @@ steps:
       - '--no-cpu-throttling'
       - '--allow-unauthenticated'
       - '--port=8080'
-      - '--set-env-vars=NODE_ENV=production,OPENCLAW_STATE_DIR=/data,OPENCLAW_CONFIG_PATH=/data/openclaw.json,OPENCLAW_GATEWAY_MODE=local'
+      - '--set-env-vars=NODE_ENV=production,OPENCLAW_STATE_DIR=/data,OPENCLAW_CONFIG_PATH=/tmp/openclaw.json,OPENCLAW_GATEWAY_MODE=local'
       - '--update-secrets=OPENCLAW_GATEWAY_TOKEN=internal-service-token:latest'
       - '--add-volume=name=gcs-data,type=cloud-storage,bucket=openclawbot-data'
       - '--add-volume-mount=volume=gcs-data,mount-path=/data'

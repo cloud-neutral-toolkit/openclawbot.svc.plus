@@ -88,7 +88,7 @@ EXPOSE 8080
 
 # Start gateway server for Cloud Run
 # - Binds to 0.0.0.0 (lan) to allow external health checks
-# - Cloud Run automatically sets PORT env var
-# - Uses token authentication (set via OPENCLAW_GATEWAY_TOKEN env var)
-# - State directory will be /data (GCS mounted volume)
-CMD ["node", "openclaw.mjs", "gateway", "--bind", "lan", "--allow-unconfigured"]
+# - Uses token auth mode explicitly to avoid config drift (e.g. stale password mode in persisted config)
+# - Reads PORT from Cloud Run env and defaults to 8080
+# - State directory remains /data (GCS mounted volume)
+CMD ["sh", "-c", "node openclaw.mjs gateway --bind lan --allow-unconfigured --auth token --port ${PORT:-8080}"]
