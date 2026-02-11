@@ -49,11 +49,6 @@ spec:
             secretKeyRef:
               name: internal-service-token
               key: latest
-        - name: INTERNAL_SERVICE_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: internal-service-token
-              key: latest
         
         resources:
           limits:
