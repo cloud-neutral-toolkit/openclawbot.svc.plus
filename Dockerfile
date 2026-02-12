@@ -93,4 +93,5 @@ EXPOSE 8080
 # - Uses token auth mode explicitly to avoid config drift (e.g. stale password mode in persisted config)
 # - Reads PORT from Cloud Run env and defaults to 8080
 # - State directory remains /data (GCS mounted volume)
+# - Idempotently writes ZAI_API_KEY to auth-profiles.json if present in env
 CMD ["sh", "-c", "node openclaw.mjs gateway --bind lan --allow-unconfigured --auth token --port ${PORT:-8080}"]
