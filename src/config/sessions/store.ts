@@ -34,6 +34,37 @@ type SessionStoreCacheEntry = {
 
 const SESSION_STORE_CACHE = new Map<string, SessionStoreCacheEntry>();
 const DEFAULT_SESSION_STORE_TTL_MS = 45_000; // 45 seconds (between 30-60s)
+const NON_FATAL_CHMOD_ERROR_CODES = new Set([
+  "EPERM",
+  "EACCES",
+  "ENOTSUP",
+  "EOPNOTSUPP",
+  "EROFS",
+  "EINVAL",
+  "ENOSYS",
+]);
+
+function getErrorCode(err: unknown): string | null {
+  return err && typeof err === "object" && "code" in err
+    ? String((err as { code?: unknown }).code)
+    : null;
+}
+
+async function chmodSessionStoreBestEffort(storePath: string): Promise<void> {
+  try {
+    await fs.promises.chmod(storePath, 0o600);
+  } catch (err) {
+    const code = getErrorCode(err);
+    if (code && NON_FATAL_CHMOD_ERROR_CODES.has(code)) {
+      log.debug("session store chmod skipped on unsupported filesystem", {
+        storePath,
+        code,
+      });
+      return;
+    }
+    throw err;
+  }
+}
 
 function isSessionStoreRecord(value: unknown): value is Record<string, SessionEntry> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -543,8 +574,8 @@ async function saveSessionStoreUnlocked(
   try {
     await fs.promises.writeFile(tmp, json, { mode: 0o600, encoding: "utf-8" });
     await fs.promises.rename(tmp, storePath);
-    // Ensure permissions are set even if rename loses them
-    await fs.promises.chmod(storePath, 0o600);
+    // Ensure permissions are set even if rename loses them.
+    await chmodSessionStoreBestEffort(storePath);
   } catch (err) {
     const code =
       err && typeof err === "object" && "code" in err
@@ -557,7 +588,7 @@ async function saveSessionStoreUnlocked(
       try {
         await fs.promises.mkdir(path.dirname(storePath), { recursive: true });
         await fs.promises.writeFile(storePath, json, { mode: 0o600, encoding: "utf-8" });
-        await fs.promises.chmod(storePath, 0o600);
+        await chmodSessionStoreBestEffort(storePath);
       } catch (err2) {
         const code2 =
           err2 && typeof err2 === "object" && "code" in err2
