@@ -66,6 +66,8 @@ COPY --from=builder /app/openclaw.mjs ./openclaw.mjs
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/extensions ./extensions
 COPY --from=builder /app/skills ./skills
+# Required by workspace bootstrap/template loader at runtime.
+COPY --from=builder /app/docs/reference/templates ./docs/reference/templates
 
 # Copy UI dist if it exists (may not exist if ui:build was skipped)
 COPY --from=builder /app/ui ./ui
