@@ -70,8 +70,8 @@ apps/macos/
 vendor/
 
 # Documentation
-docs/
-*.md
+# Documentation
+# docs/ and *.md unignored for Docker build
 !README.md
 
 # CI/CD
