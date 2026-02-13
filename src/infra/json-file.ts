@@ -19,5 +19,14 @@ export function saveJsonFile(pathname: string, data: unknown) {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   }
   fs.writeFileSync(pathname, `${JSON.stringify(data, null, 2)}\n`, "utf8");
-  fs.chmodSync(pathname, 0o600);
+  // Best-effort chmod: ignore errors on filesystems that don't support it (e.g. GCS FUSE)
+  try {
+    fs.chmodSync(pathname, 0o600);
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    // Ignore permission errors on unsupported filesystems
+    if (code !== "EPERM" && code !== "ENOTSUP" && code !== "EOPNOTSUPP" && code !== "EROFS") {
+      throw err;
+    }
+  }
 }
