@@ -29,6 +29,9 @@ COPY scripts ./scripts
 # Install dependencies with frozen lockfile
 RUN pnpm install --frozen-lockfile
 
+# Copy docs first to ensure templates are preserved
+COPY docs ./docs
+
 # Copy source code and build
 COPY . .
 RUN pnpm build
