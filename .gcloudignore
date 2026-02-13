@@ -47,7 +47,7 @@ ui/__screenshots__/
 
 # Local development
 .local/
-local/
+/local/
 .worktrees/
 
 # Logs
