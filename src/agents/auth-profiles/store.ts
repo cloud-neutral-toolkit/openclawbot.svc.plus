@@ -25,6 +25,23 @@ export async function updateAuthProfileStoreWithLock(params: {
   const authPath = resolveAuthStorePath(params.agentDir);
   ensureAuthStoreFile(authPath);
 
+  // Skip file locking on GCS FUSE to avoid rate limit errors (429)
+  // GCS has strict limits on object mutation operations (create/delete lock files)
+  const isGcsFuse = authPath.startsWith("/data/");
+  
+  if (isGcsFuse) {
+    try {
+      const store = ensureAuthProfileStore(params.agentDir);
+      const shouldSave = params.updater(store);
+      if (shouldSave) {
+        saveAuthProfileStore(store, params.agentDir);
+      }
+      return store;
+    } catch {
+      return null;
+    }
+  }
+
   let release: (() => Promise<void>) | undefined;
   try {
     release = await lockfile.lock(authPath, AUTH_STORE_LOCK_OPTIONS);
