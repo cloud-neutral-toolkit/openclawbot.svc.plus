@@ -543,7 +543,7 @@ struct SettingsTab: View {
                 Image(systemName: "bolt.horizontal.circle.fill")
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Connect last known")
-                    Text("\(host):\(port)")
+                    Text(verbatim: "\(host):\(port)")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
