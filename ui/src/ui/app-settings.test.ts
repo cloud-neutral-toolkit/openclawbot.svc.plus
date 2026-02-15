@@ -1,10 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Tab } from "./navigation.ts";
-import { setTabFromRoute } from "./app-settings.ts";
+import { applySettingsFromUrl, setTabFromRoute } from "./app-settings.ts";
 
 type SettingsHost = Parameters<typeof setTabFromRoute>[0] & {
   logsPollInterval: number | null;
   debugPollInterval: number | null;
+  password?: string;
+  theme: string;
+  themeResolved: string;
+  applySessionKey: string;
+  sessionKey: string;
+  tab: Tab;
+  connected: boolean;
+  chatHasAutoScrolled: boolean;
+  logsAtBottom: boolean;
+  eventLog: unknown[];
+  eventLogBuffer: unknown[];
+  basePath: string;
+  themeMedia: MediaQueryList | null;
+  themeMediaHandler: ((event: MediaQueryListEvent) => void) | null;
 };
 
 const createHost = (tab: Tab): SettingsHost => ({
@@ -66,5 +80,24 @@ describe("setTabFromRoute", () => {
 
     setTabFromRoute(host, "chat");
     expect(host.debugPollInterval).toBeNull();
+  });
+});
+
+describe("applySettingsFromUrl", () => {
+  it("correctly parses token containing '+' from hash", () => {
+    const host = createHost("chat");
+    const testToken = "uTvryFvAbz6M5sRtmTaSTQY6otLZ95hneBsWqXu+35I=";
+
+    // Mock window.location
+    const originalLocation = window.location;
+    delete (window as any).location;
+    window.location = new URL("https://example.com/chat#token=" + testToken) as any;
+
+    applySettingsFromUrl(host);
+
+    expect(host.settings.token).toBe(testToken);
+
+    // Cleanup
+    window.location = originalLocation;
   });
 });
