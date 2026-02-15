@@ -1,0 +1,27 @@
+[
+  {
+    "task": "Refactor LaunchAgentManager.swift",
+    "status": "pending",
+    "description": "Update LaunchAgentManager.swift to use Bundle.main.bundleIdentifier instead of hardcoded bundle IDs. This ensures the configuration is tied to the current app's bundle ID."
+  },
+  {
+    "task": "Refactor GatewayDiscoveryModel.swift",
+    "status": "pending",
+    "description": "Update GatewayDiscoveryModel.swift to use dynamic logger subsystem and dispatch queue labels derived from the bundle identifier."
+  },
+  {
+    "task": "Update package-mac-app.sh",
+    "status": "pending",
+    "description": "Modify the package-mac-app.sh script to load environment variables from the .env file if it exists, allowing configuration of BUNDLE_ID."
+  },
+  {
+    "task": "Update ios/project.yml",
+    "status": "pending",
+    "description": "Update apps/ios/project.yml to use environment variables for bundleIdPrefix, enabling configuration via .env or CI."
+  },
+  {
+    "task": "Update .env.example",
+    "status": "pending",
+    "description": "Add OPENCLAW_BUNDLE_PREFIX and BUNDLE_ID examples to .env.example."
+  }
+]

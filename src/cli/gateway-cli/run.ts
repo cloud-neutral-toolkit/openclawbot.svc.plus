@@ -225,7 +225,7 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
     defaultRuntime.error(
       [
         "Gateway auth is set to token, but no token is configured.",
-        "Set gateway.auth.token (or OPENCLAW_GATEWAY_TOKEN), or pass --token.",
+        "Set gateway.auth.token (or OPENCLAW_GATEWAY_TOKEN/INTERNAL_SERVICE_TOKEN), or pass --token.",
         ...authHints,
       ]
         .filter(Boolean)

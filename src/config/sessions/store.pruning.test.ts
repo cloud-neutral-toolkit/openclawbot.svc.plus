@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import * as nodeFs from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -512,6 +513,29 @@ describe("Integration: saveSessionStore with pruning", () => {
     expect(loaded.stale).toBeDefined();
     expect(loaded.fresh).toBeDefined();
     expect(Object.keys(loaded)).toHaveLength(2);
+  });
+
+  it("saveSessionStore ignores non-fatal chmod errors on unsupported filesystems", async () => {
+    mockLoadConfig.mockReturnValue({
+      session: {
+        maintenance: {
+          mode: "enforce",
+          pruneAfter: "30d",
+          maxEntries: 500,
+          rotateBytes: 10_485_760,
+        },
+      },
+    });
+    vi.spyOn(nodeFs.promises, "chmod").mockRejectedValueOnce(
+      Object.assign(new Error("operation not permitted"), { code: "EPERM" }),
+    );
+
+    await saveSessionStore(storePath, {
+      "test-session": makeEntry(Date.now()),
+    });
+
+    const loaded = loadSessionStore(storePath);
+    expect(loaded["test-session"]).toBeDefined();
   });
 
   it("resolveMaintenanceConfig reads from loadConfig().session.maintenance", async () => {

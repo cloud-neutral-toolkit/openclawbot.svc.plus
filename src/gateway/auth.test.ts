@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthRateLimiter } from "./auth-rate-limit.js";
-import { authorizeGatewayConnect } from "./auth.js";
+import { authorizeGatewayConnect, resolveGatewayAuth } from "./auth.js";
 
 function createLimiterSpy(): AuthRateLimiter & {
   check: ReturnType<typeof vi.fn>;
@@ -18,6 +18,26 @@ function createLimiterSpy(): AuthRateLimiter & {
 }
 
 describe("gateway auth", () => {
+  it("prefers env token over config token", () => {
+    const resolved = resolveGatewayAuth({
+      authConfig: { mode: "token", token: "config-token" },
+      env: {
+        OPENCLAW_GATEWAY_TOKEN: "env-token",
+      } as NodeJS.ProcessEnv,
+    });
+    expect(resolved.mode).toBe("token");
+    expect(resolved.token).toBe("env-token");
+  });
+
+  it("falls back to config token when env token is missing", () => {
+    const resolved = resolveGatewayAuth({
+      authConfig: { mode: "token", token: "config-token" },
+      env: {} as NodeJS.ProcessEnv,
+    });
+    expect(resolved.mode).toBe("token");
+    expect(resolved.token).toBe("config-token");
+  });
+
   it("does not throw when req is missing socket", async () => {
     const res = await authorizeGatewayConnect({
       auth: { mode: "token", token: "secret", allowTailscale: false },

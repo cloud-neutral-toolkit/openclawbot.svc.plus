@@ -51,7 +51,7 @@ struct TalkOrbOverlay: View {
 
             let agentName = self.appModel.activeAgentName.trimmingCharacters(in: .whitespacesAndNewlines)
             if !agentName.isEmpty {
-                Text("Bot: \(agentName)")
+                Text(verbatim: "Bot: \(agentName)")
                     .font(.system(.caption, design: .rounded).weight(.semibold))
                     .foregroundStyle(Color.white.opacity(0.70))
             }
@@ -82,6 +82,6 @@ struct TalkOrbOverlay: View {
             self.pulse = true
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Talk Mode \(status)")
+        .accessibilityLabel(Text(verbatim: "Talk Mode \(status)"))
     }
 }

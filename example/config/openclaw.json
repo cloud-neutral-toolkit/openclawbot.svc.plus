@@ -1,0 +1,108 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.9"
+  },
+  "diagnostics": {
+    "otel": {
+      "enabled": false
+    }
+  },
+  "update": {
+    "checkOnStart": true
+  },
+  "auth": {
+    "profiles": {
+      "zai:default": {
+        "provider": "zai",
+        "mode": "api_key"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "zai/glm-4.7"
+      },
+      "models": {
+        "zai/glm-4.7": {
+          "alias": "GLM"
+        }
+      },
+      "workspace": "/data/workspace",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "channels": {
+    "whatsapp": {
+      "dmPolicy": "allowlist",
+      "selfChatMode": true,
+      "allowFrom": [
+        "YOUR_PHONE_NUMBER"
+      ],
+      "groupPolicy": "allowlist",
+      "mediaMaxMb": 50,
+      "actions": {
+        "reactions": true,
+        "sendMessage": true,
+        "polls": true
+      },
+      "ackReaction": {
+        "direct": true,
+        "group": "mentions"
+      },
+      "debounceMs": 0
+    }
+  },
+  "gateway": {
+    "port": 8080,
+    "mode": "local",
+    "bind": "auto",
+    "controlUi": {
+      "enabled": true,
+      "dangerouslyDisableDeviceAuth": true
+    },
+    "auth": {
+      "mode": "token"
+    },
+    "trustedProxies": [
+      "jp-xhttp.svc.plus",
+      "us-xhttp.svc.plus",
+      "hk-xhttp.svc.plus"
+    ],
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "remote": {
+      "url": "wss://YOUR_SERVICE_URL"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "googlechat": {
+        "enabled": true
+      },
+      "whatsapp": {
+        "enabled": true
+      }
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    }
+  }
+}

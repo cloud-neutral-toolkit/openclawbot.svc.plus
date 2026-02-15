@@ -76,8 +76,8 @@ platform :ios do
       scheme: "OpenClaw",
       export_method: "app-store",
       clean: true,
-      xcargs: "DEVELOPMENT_TEAM=#{team_id} -allowProvisioningUpdates",
-      export_xcargs: "-allowProvisioningUpdates",
+      xcargs: "DEVELOPMENT_TEAM=#{team_id} -allowProvisioningUpdates -allowProvisioningDeviceRegistration",
+      export_xcargs: "-allowProvisioningUpdates -allowProvisioningDeviceRegistration",
       export_options: {
         signingStyle: "automatic"
       }

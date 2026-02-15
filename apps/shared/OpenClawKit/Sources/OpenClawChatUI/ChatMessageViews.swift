@@ -519,7 +519,7 @@ struct ChatPendingToolsBubble: View {
                 let display = ToolDisplayRegistry.resolve(name: call.name, args: call.args)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text("\(display.emoji) \(display.label)")
+                        Text(verbatim: "\(display.emoji) \(display.label)")
                             .font(.footnote.monospaced())
                             .lineLimit(1)
                         Spacer(minLength: 0)
