@@ -29,7 +29,7 @@ export async function updateAuthProfileStoreWithLock(params: {
   // GCS has strict limits on object mutation operations (create/delete lock files)
   const gcsMountPath = process.env.OPENCLAW_STATE_DIR || "/data";
   const isGcsFuse = authPath.startsWith(gcsMountPath);
-  
+
   if (isGcsFuse) {
     try {
       const store = ensureAuthProfileStore(params.agentDir);
