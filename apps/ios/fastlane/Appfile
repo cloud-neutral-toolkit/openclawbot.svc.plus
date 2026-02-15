@@ -1,4 +1,4 @@
-app_identifier("bot.molt.ios")
+app_identifier(ENV["IOS_APP_IDENTIFIER"] || "plus.svc.openclawbot")
 
 # Auth is expected via App Store Connect API key.
 # Provide either:

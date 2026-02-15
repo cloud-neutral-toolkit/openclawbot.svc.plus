@@ -8,6 +8,9 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_ROOT="$ROOT_DIR/dist/OpenClaw.app"
 BUILD_ROOT="$ROOT_DIR/apps/macos/.build"
 PRODUCT="OpenClaw"
+if [ -f "$ROOT_DIR/.env" ]; then
+  export $(grep -v '^#' "$ROOT_DIR/.env" | xargs)
+fi
 BUNDLE_ID="${BUNDLE_ID:-ai.openclaw.mac.debug}"
 PKG_VERSION="$(cd "$ROOT_DIR" && node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")"
 BUILD_TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
